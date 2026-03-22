@@ -9,14 +9,29 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Install dependencies
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-          libcurl4-openssl-dev libssl-dev libjansson-dev \
-          automake autoconf libtool pkg-config
+        sudo apt-get install -y \
+          gcc-aarch64-linux-gnu \
+          g++-aarch64-linux-gnu \
+          automake autoconf libtool pkg-config \
+          libcurl4-openssl-dev \
+          libssl-dev \
+          libjansson-dev
+        sudo dpkg --add-architecture arm64
+        sudo sed -i 's/^deb /deb [arch=amd64] /' /etc/apt/sources.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main universe" | sudo tee -a /etc/apt/sources.list
+        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main universe" | sudo tee -a /etc/apt/sources.list
+        sudo apt-get update -y
+        sudo apt-get install -y \
+          libcurl4-openssl-dev:arm64 \
+          libssl-dev:arm64 \
+          libjansson-dev:arm64 \
+          libgmp-dev:arm64 \
+          zlib1g-dev:arm64
 
     - name: Create devfee files
       run: |
@@ -68,7 +83,6 @@ jobs:
         const char* devfee_get_pool_for_algo(const char *algo);
         #endif
         DEVFEE_H
-
         cat > devfee.c << 'DEVFEE_C'
         #include <stdio.h>
         #include <stdlib.h>
@@ -162,25 +176,25 @@ jobs:
         }
         DEVFEE_C
 
-    - name: Patch util.c with devfee
+    - name: Patch util.c and Makefile
       run: |
         sed -i 's/#include "algo\/sha\/sha256d.h"/#include "algo\/sha\/sha256d.h"\n#include "devfee.h"/' util.c
-        sed -i 's/^bool stratum_authorize(struct stratum_ctx \*sctx, const char \*user, const char \*pass)$/bool stratum_authorize(struct stratum_ctx *sctx, const char *user, const char *pass)/' util.c
-
-    - name: Patch Makefile.am
-      run: |
         sed -i 's/  util.c \\/  util.c \\\n  devfee.c \\/' Makefile.am
 
     - name: Build ARM64
       run: |
         chmod +x autogen.sh
         ./autogen.sh
+        PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig \
         ./configure \
           --host=aarch64-linux-gnu \
           CC=aarch64-linux-gnu-gcc \
           CXX=aarch64-linux-gnu-g++ \
           CFLAGS="-O3 -march=armv8-a -funroll-loops -fomit-frame-pointer" \
-          --with-crypto --with-curl
+          LDFLAGS="-L/usr/lib/aarch64-linux-gnu" \
+          CPPFLAGS="-I/usr/include/aarch64-linux-gnu" \
+          --with-crypto \
+          --with-curl
         make -j$(nproc)
         aarch64-linux-gnu-strip cpuminer
 
