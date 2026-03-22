@@ -17,15 +17,16 @@ jobs:
         sudo apt-get install -y \
           gcc-aarch64-linux-gnu \
           g++-aarch64-linux-gnu \
-          automake autoconf libtool pkg-config \
-          libcurl4-openssl-dev \
-          libssl-dev \
-          libjansson-dev
+          automake autoconf libtool pkg-config
         sudo dpkg --add-architecture arm64
-        sudo sed -i 's/^deb /deb [arch=amd64] /' /etc/apt/sources.list
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main universe" | sudo tee -a /etc/apt/sources.list
-        echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main universe" | sudo tee -a /etc/apt/sources.list
-        sudo apt-get update -y
+        sudo sed -i 's/^Types: deb$/Types: deb/' /etc/apt/sources.list.d/ubuntu.sources || true
+        sudo sed -i 's/^deb /deb [arch=amd64] /' /etc/apt/sources.list || true
+        cat << 'EOF' | sudo tee /etc/apt/sources.list.d/arm64-ports.list
+        deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main universe restricted
+        deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main universe restricted
+        deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-security main universe restricted
+        EOF
+        sudo apt-get update -y || true
         sudo apt-get install -y \
           libcurl4-openssl-dev:arm64 \
           libssl-dev:arm64 \
