@@ -68,11 +68,16 @@ jobs:
           RANLIB="$RANLIB" \
           --prefix=$HOME/android-libs \
           --with-openssl=$HOME/android-libs \
-          --disable-shared --enable-static \
-          --disable-manual --disable-docs \
+          --disable-shared \
+          --enable-static \
+          --disable-manual \
+          --without-libidn2 \
+          --without-librtmp \
+          --without-brotli \
+          --without-zstd \
           CFLAGS="-fPIE -pie -I$HOME/android-libs/include" \
           LDFLAGS="-fPIE -pie -L$HOME/android-libs/lib"
-        make -j$(nproc) 2>&1 | tail -5
+        make -j$(nproc)
         make install
         cd ..
 
