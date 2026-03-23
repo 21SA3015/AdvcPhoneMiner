@@ -114,12 +114,12 @@ jobs:
           --disable-avx \
           --disable-avx2 \
           --disable-avx512
-        make -j$(nproc) 2>&1 | tail -20
-        echo "=== Files in directory ==="
-        ls -la
-        find . -name "cpuminer*" -type f 2>/dev/null
+        make -j$(nproc) || make -j1 2>&1 | grep -E "error:|fatal" | head -30
+        echo "EXIT: $?"
+        echo "=== Files ==="
+        ls -la cpuminer 2>/dev/null || echo "cpuminer NOT FOUND"
+        find . -name "cpuminer" -type f 2>/dev/null
         $STRIP cpuminer 2>/dev/null || true
-        file cpuminer 2>/dev/null || echo "cpuminer not found"
 
     - name: Upload binary
       uses: actions/upload-artifact@v4
