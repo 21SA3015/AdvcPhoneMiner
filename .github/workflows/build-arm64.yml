@@ -38,6 +38,7 @@ jobs:
         export RANLIB=$TOOLCHAIN/bin/llvm-ranlib
         export STRIP=$TOOLCHAIN/bin/llvm-strip
         export PATH=$TOOLCHAIN/bin:$PATH
+        export LIBS_DIR=$HOME/android-libs
 
         echo "=== Verifikasi compiler ==="
         $CC --version
@@ -49,12 +50,13 @@ jobs:
         cd openssl-3.3.1
         ./Configure android-arm64 \
           -D__ANDROID_API__=$API \
-          --prefix=$HOME/android-libs \
+          --prefix=$LIBS_DIR \
           ANDROID_NDK_ROOT=$NDK \
           no-shared no-tests
         make -j$(nproc)
         make install_sw
         cd ..
+        echo "OpenSSL done: $(ls $LIBS_DIR/lib/libssl.a 2>/dev/null || echo MISSING)"
 
         # Build curl
         echo "=== Build curl ==="
@@ -66,8 +68,8 @@ jobs:
           CC="$CC" \
           AR="$AR" \
           RANLIB="$RANLIB" \
-          --prefix=$HOME/android-libs \
-          --with-openssl=$HOME/android-libs \
+          --prefix=$LIBS_DIR \
+          --with-openssl=$LIBS_DIR \
           --disable-shared \
           --enable-static \
           --disable-manual \
@@ -75,11 +77,12 @@ jobs:
           --without-librtmp \
           --without-brotli \
           --without-zstd \
-          CFLAGS="-fPIE -pie -I$HOME/android-libs/include" \
-          LDFLAGS="-fPIE -pie -L$HOME/android-libs/lib"
+          CFLAGS="-fPIE -pie -I$LIBS_DIR/include" \
+          LDFLAGS="-fPIE -pie -L$LIBS_DIR/lib"
         make -j$(nproc)
-        make install || true
+        make install
         cd ..
+        echo "curl done: $(ls $LIBS_DIR/lib/libcurl.a 2>/dev/null || echo MISSING)"
 
         # Build GMP
         echo "=== Build GMP ==="
@@ -91,12 +94,13 @@ jobs:
           CC="$CC" \
           AR="$AR" \
           RANLIB="$RANLIB" \
-          --prefix=$HOME/android-libs \
+          --prefix=$LIBS_DIR \
           --disable-shared \
           --enable-static
         make -j$(nproc)
-        make install || true
+        make install
         cd ..
+        echo "GMP done: $(ls $LIBS_DIR/lib/libgmp.a 2>/dev/null || echo MISSING)"
 
         # Build cpuminer
         echo "=== Build cpuminer ==="
@@ -108,20 +112,20 @@ jobs:
           CXX="$CXX" \
           AR="$AR" \
           RANLIB="$RANLIB" \
-          CFLAGS="-O2 -fPIE -pie -I$HOME/android-libs/include -Wno-error -w" \
-          LDFLAGS="-fPIE -pie -L$HOME/android-libs/lib -static" \
-          PKG_CONFIG_PATH="$HOME/android-libs/lib/pkgconfig" \
+          CFLAGS="-O2 -fPIE -pie -I$LIBS_DIR/include -Wno-error -w" \
+          LDFLAGS="-fPIE -pie -L$LIBS_DIR/lib -static" \
+          LIBS="-lcurl -lssl -lcrypto -lgmp -lz -ldl" \
+          PKG_CONFIG_PATH="$LIBS_DIR/lib/pkgconfig" \
           --disable-assembly \
           --without-asm \
           --disable-avx \
           --disable-avx2 \
           --disable-avx512
         make -j$(nproc) || make -j1
-        echo "=== Cek hasil build ==="
+        echo "=== Cek hasil ==="
         ls -la cpuminer 2>/dev/null || echo "cpuminer NOT FOUND"
-        find . -name "cpuminer" -not -path "*/curl*" -not -path "*/openssl*" -not -path "*/gmp*" -type f
         $STRIP cpuminer 2>/dev/null || true
-        file cpuminer 2>/dev/null || echo "cpuminer not found"
+        file cpuminer 2>/dev/null || true
 
     - name: Upload binary
       uses: actions/upload-artifact@v4
