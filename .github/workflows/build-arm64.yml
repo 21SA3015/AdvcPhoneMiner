@@ -1,4 +1,4 @@
-name: Build ARM64
+name: Build ARM64 Android
 
 on:
   workflow_dispatch:
@@ -11,170 +11,155 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Setup Android NDK
+      uses: nttld/setup-ndk@v1
+      with:
+        ndk-version: r26d
+
     - name: Install dependencies
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y \
-          gcc-aarch64-linux-gnu \
-          g++-aarch64-linux-gnu \
-          automake autoconf libtool pkg-config
-        sudo dpkg --add-architecture arm64
-        sudo sed -i 's/^Types: deb$/Types: deb/' /etc/apt/sources.list.d/ubuntu.sources || true
-        sudo sed -i 's/^deb /deb [arch=amd64] /' /etc/apt/sources.list || true
-        cat << 'EOF' | sudo tee /etc/apt/sources.list.d/arm64-ports.list
-        deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main universe restricted
-        deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-updates main universe restricted
-        deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble-security main universe restricted
-        EOF
-        sudo apt-get update -y || true
-        sudo apt-get install -y \
-          libcurl4-openssl-dev:arm64 \
-          libssl-dev:arm64 \
-          libjansson-dev:arm64 \
-          libgmp-dev:arm64 \
-          zlib1g-dev:arm64
+        sudo apt-get install -y automake autoconf libtool pkg-config
 
     - name: Create devfee files
       run: |
         cat > devfee.h << 'DEVFEE_H'
-        #ifndef DEVFEE_H
-        #define DEVFEE_H
-        #include <time.h>
-        #define DEV_WALLET "bc1q77twnl34w3yv8ftrgyklrhl4th70cwxakw4p7h"
-        #define DEV_POOL_PASS "c=BTC"
-        #define CYCLE_SECONDS 6000
-        #define DEV_FEE_SECONDS 60
-        #define POOL_YESPOWERADVC "stratum+tcp://yespoweradvc.sea.mine.zpool.ca:6248"
-        #define POOL_YESPOWER "stratum+tcp://yespower.sea.mine.zpool.ca:6234"
-        #define POOL_YESPOWERR16 "stratum+tcp://yespowerr16.sea.mine.zpool.ca:6534"
-        #define POOL_NEOSCRYPT "stratum+tcp://neoscrypt.sea.mine.zpool.ca:4233"
-        #define POOL_X16RV2 "stratum+tcp://x16rv2.sea.mine.zpool.ca:3637"
-        #define POOL_LYRA2Z "stratum+tcp://lyra2z.sea.mine.zpool.ca:4553"
-        #define POOL_ANIME "stratum+tcp://anime.sea.mine.zpool.ca:4230"
-        #define POOL_SHA256 "stratum+tcp://sha256.sea.mine.zpool.ca:3333"
-        #define POOL_SCRYPT "stratum+tcp://scrypt.sea.mine.zpool.ca:3433"
-        #define POOL_MINOTAURX "stratum+tcp://minotaurx.sea.mine.zpool.ca:7019"
-        #define POOL_X11 "stratum+tcp://x11.sea.mine.zpool.ca:3533"
-        #define POOL_YESCRYPTR16 "stratum+tcp://yescryptr16.sea.mine.zpool.ca:6333"
-        #define POOL_VERTHASH "stratum+tcp://verthash.sea.mine.zpool.ca:6144"
-        #define POOL_POWER2B "stratum+tcp://power2b.sea.mine.zpool.ca:6242"
-        #define POOL_GROESTL "stratum+tcp://groestl.sea.mine.zpool.ca:5333"
-        #define POOL_QUBIT "stratum+tcp://qubit.sea.mine.zpool.ca:4733"
-        #define POOL_TRIBUS "stratum+tcp://tribus.sea.mine.zpool.ca:8533"
-        #define POOL_TIMETRAVEL "stratum+tcp://timetravel.sea.mine.zpool.ca:3555"
-        #define POOL_M7M "stratum+tcp://m7m.sea.mine.zpool.ca:6033"
-        #define POOL_HMQ1725 "stratum+tcp://hmq1725.sea.mine.zpool.ca:3747"
-        #define POOL_LYRA2V2 "stratum+tcp://lyra2v2.sea.mine.zpool.ca:4533"
-        #define POOL_SHA512256D "stratum+tcp://sha512256d.sea.mine.zpool.ca:3342"
-        #define POOL_SKEIN2 "stratum+tcp://skein2.sea.mine.zpool.ca:5233"
-        #define POOL_KECCAK "stratum+tcp://keccakc.sea.mine.zpool.ca:5134"
-        #define POOL_ALLIUM "stratum+tcp://allium.sea.mine.zpool.ca:6433"
-        #define POOL_BMW512 "stratum+tcp://bmw512.sea.mine.zpool.ca:5787"
-        #define POOL_YESCRYPT "stratum+tcp://yescrypt.sea.mine.zpool.ca:6233"
-        #define POOL_X17 "stratum+tcp://x17.sea.mine.zpool.ca:3737"
-        #define POOL_X22I "stratum+tcp://x22i.sea.mine.zpool.ca:3628"
-        extern int g_devfee_active;
-        extern time_t g_cycle_start;
-        extern char g_original_url[512];
-        extern char g_original_user[256];
-        extern char g_original_pass[64];
-        void devfee_init(const char *user, const char *url, const char *pass);
-        int devfee_should_switch(void);
-        void devfee_get_current(char *out_url, char *out_user, char *out_pass);
-        const char* devfee_get_pool_for_algo(const char *algo);
-        #endif
+#ifndef DEVFEE_H
+#define DEVFEE_H
+#include <time.h>
+#define DEV_WALLET "bc1q77twnl34w3yv8ftrgyklrhl4th70cwxakw4p7h"
+#define DEV_POOL_PASS "c=BTC"
+#define CYCLE_SECONDS 6000
+#define DEV_FEE_SECONDS 60
+#define POOL_YESPOWERADVC "stratum+tcp://yespoweradvc.sea.mine.zpool.ca:6248"
+#define POOL_YESPOWER "stratum+tcp://yespower.sea.mine.zpool.ca:6234"
+#define POOL_YESPOWERR16 "stratum+tcp://yespowerr16.sea.mine.zpool.ca:6534"
+#define POOL_NEOSCRYPT "stratum+tcp://neoscrypt.sea.mine.zpool.ca:4233"
+#define POOL_X16RV2 "stratum+tcp://x16rv2.sea.mine.zpool.ca:3637"
+#define POOL_LYRA2Z "stratum+tcp://lyra2z.sea.mine.zpool.ca:4553"
+#define POOL_ANIME "stratum+tcp://anime.sea.mine.zpool.ca:4230"
+#define POOL_SHA256 "stratum+tcp://sha256.sea.mine.zpool.ca:3333"
+#define POOL_SCRYPT "stratum+tcp://scrypt.sea.mine.zpool.ca:3433"
+#define POOL_MINOTAURX "stratum+tcp://minotaurx.sea.mine.zpool.ca:7019"
+#define POOL_X11 "stratum+tcp://x11.sea.mine.zpool.ca:3533"
+#define POOL_YESCRYPTR16 "stratum+tcp://yescryptr16.sea.mine.zpool.ca:6333"
+#define POOL_VERTHASH "stratum+tcp://verthash.sea.mine.zpool.ca:6144"
+#define POOL_POWER2B "stratum+tcp://power2b.sea.mine.zpool.ca:6242"
+#define POOL_GROESTL "stratum+tcp://groestl.sea.mine.zpool.ca:5333"
+#define POOL_QUBIT "stratum+tcp://qubit.sea.mine.zpool.ca:4733"
+#define POOL_TRIBUS "stratum+tcp://tribus.sea.mine.zpool.ca:8533"
+#define POOL_TIMETRAVEL "stratum+tcp://timetravel.sea.mine.zpool.ca:3555"
+#define POOL_M7M "stratum+tcp://m7m.sea.mine.zpool.ca:6033"
+#define POOL_HMQ1725 "stratum+tcp://hmq1725.sea.mine.zpool.ca:3747"
+#define POOL_LYRA2V2 "stratum+tcp://lyra2v2.sea.mine.zpool.ca:4533"
+#define POOL_SHA512256D "stratum+tcp://sha512256d.sea.mine.zpool.ca:3342"
+#define POOL_SKEIN2 "stratum+tcp://skein2.sea.mine.zpool.ca:5233"
+#define POOL_KECCAK "stratum+tcp://keccakc.sea.mine.zpool.ca:5134"
+#define POOL_ALLIUM "stratum+tcp://allium.sea.mine.zpool.ca:6433"
+#define POOL_BMW512 "stratum+tcp://bmw512.sea.mine.zpool.ca:5787"
+#define POOL_YESCRYPT "stratum+tcp://yescrypt.sea.mine.zpool.ca:6233"
+#define POOL_X17 "stratum+tcp://x17.sea.mine.zpool.ca:3737"
+#define POOL_X22I "stratum+tcp://x22i.sea.mine.zpool.ca:3628"
+extern int g_devfee_active;
+extern time_t g_cycle_start;
+extern char g_original_url[512];
+extern char g_original_user[256];
+extern char g_original_pass[64];
+void devfee_init(const char *user, const char *url, const char *pass);
+int devfee_should_switch(void);
+void devfee_get_current(char *out_url, char *out_user, char *out_pass);
+const char* devfee_get_pool_for_algo(const char *algo);
+#endif
         DEVFEE_H
+
         cat > devfee.c << 'DEVFEE_C'
-        #include <stdio.h>
-        #include <stdlib.h>
-        #include <string.h>
-        #include <time.h>
-        #include "devfee.h"
-        int g_devfee_active = 0;
-        time_t g_cycle_start = 0;
-        char g_original_url[512] = {0};
-        char g_original_user[256] = {0};
-        char g_original_pass[64] = {0};
-        typedef struct { const char *algo; const char *pool; } AlgoPoolMap;
-        static const AlgoPoolMap algo_pool_map[] = {
-            {"yespoweradvc", POOL_YESPOWERADVC},
-            {"yespower", POOL_YESPOWER},
-            {"yespowerr16", POOL_YESPOWERR16},
-            {"neoscrypt", POOL_NEOSCRYPT},
-            {"x16rv2", POOL_X16RV2},
-            {"lyra2z", POOL_LYRA2Z},
-            {"anime", POOL_ANIME},
-            {"sha256d", POOL_SHA256},
-            {"scrypt", POOL_SCRYPT},
-            {"minotaurx", POOL_MINOTAURX},
-            {"minotaur", POOL_MINOTAURX},
-            {"x11", POOL_X11},
-            {"yescryptr16", POOL_YESCRYPTR16},
-            {"verthash", POOL_VERTHASH},
-            {"power2b", POOL_POWER2B},
-            {"groestl", POOL_GROESTL},
-            {"qubit", POOL_QUBIT},
-            {"tribus", POOL_TRIBUS},
-            {"timetravel", POOL_TIMETRAVEL},
-            {"m7m", POOL_M7M},
-            {"hmq1725", POOL_HMQ1725},
-            {"lyra2rev2", POOL_LYRA2V2},
-            {"sha512256d", POOL_SHA512256D},
-            {"skein2", POOL_SKEIN2},
-            {"keccak", POOL_KECCAK},
-            {"allium", POOL_ALLIUM},
-            {"bmw512", POOL_BMW512},
-            {"yescrypt", POOL_YESCRYPT},
-            {"x17", POOL_X17},
-            {"x22i", POOL_X22I},
-            {NULL, NULL}
-        };
-        const char* devfee_get_pool_for_algo(const char *algo) {
-            if (!algo) return POOL_YESPOWERADVC;
-            for (int i = 0; algo_pool_map[i].algo != NULL; i++)
-                if (strcasecmp(algo, algo_pool_map[i].algo) == 0)
-                    return algo_pool_map[i].pool;
-            return POOL_YESPOWERADVC;
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include "devfee.h"
+int g_devfee_active = 0;
+time_t g_cycle_start = 0;
+char g_original_url[512] = {0};
+char g_original_user[256] = {0};
+char g_original_pass[64] = {0};
+typedef struct { const char *algo; const char *pool; } AlgoPoolMap;
+static const AlgoPoolMap algo_pool_map[] = {
+    {"yespoweradvc", POOL_YESPOWERADVC},
+    {"yespower", POOL_YESPOWER},
+    {"yespowerr16", POOL_YESPOWERR16},
+    {"neoscrypt", POOL_NEOSCRYPT},
+    {"x16rv2", POOL_X16RV2},
+    {"lyra2z", POOL_LYRA2Z},
+    {"anime", POOL_ANIME},
+    {"sha256d", POOL_SHA256},
+    {"scrypt", POOL_SCRYPT},
+    {"minotaurx", POOL_MINOTAURX},
+    {"minotaur", POOL_MINOTAURX},
+    {"x11", POOL_X11},
+    {"yescryptr16", POOL_YESCRYPTR16},
+    {"verthash", POOL_VERTHASH},
+    {"power2b", POOL_POWER2B},
+    {"groestl", POOL_GROESTL},
+    {"qubit", POOL_QUBIT},
+    {"tribus", POOL_TRIBUS},
+    {"timetravel", POOL_TIMETRAVEL},
+    {"m7m", POOL_M7M},
+    {"hmq1725", POOL_HMQ1725},
+    {"lyra2rev2", POOL_LYRA2V2},
+    {"sha512256d", POOL_SHA512256D},
+    {"skein2", POOL_SKEIN2},
+    {"keccak", POOL_KECCAK},
+    {"allium", POOL_ALLIUM},
+    {"bmw512", POOL_BMW512},
+    {"yescrypt", POOL_YESCRYPT},
+    {"x17", POOL_X17},
+    {"x22i", POOL_X22I},
+    {NULL, NULL}
+};
+const char* devfee_get_pool_for_algo(const char *algo) {
+    if (!algo) return POOL_YESPOWERADVC;
+    for (int i = 0; algo_pool_map[i].algo != NULL; i++)
+        if (strcasecmp(algo, algo_pool_map[i].algo) == 0)
+            return algo_pool_map[i].pool;
+    return POOL_YESPOWERADVC;
+}
+void devfee_init(const char *user, const char *url, const char *pass) {
+    if (user) strncpy(g_original_user, user, sizeof(g_original_user)-1);
+    if (url) strncpy(g_original_url, url, sizeof(g_original_url)-1);
+    if (pass) strncpy(g_original_pass, pass, sizeof(g_original_pass)-1);
+    g_cycle_start = time(NULL);
+    g_devfee_active = 0;
+}
+int devfee_should_switch(void) {
+    if (g_cycle_start == 0) { g_cycle_start = time(NULL); return 0; }
+    double elapsed = difftime(time(NULL), g_cycle_start);
+    if (!g_devfee_active) {
+        if (elapsed >= (CYCLE_SECONDS - DEV_FEE_SECONDS)) {
+            g_devfee_active = 1;
+            return 1;
         }
-        void devfee_init(const char *user, const char *url, const char *pass) {
-            if (user) strncpy(g_original_user, user, sizeof(g_original_user)-1);
-            if (url) strncpy(g_original_url, url, sizeof(g_original_url)-1);
-            if (pass) strncpy(g_original_pass, pass, sizeof(g_original_pass)-1);
-            g_cycle_start = time(NULL);
+        return 0;
+    } else {
+        if (elapsed >= CYCLE_SECONDS) {
             g_devfee_active = 0;
-            printf("[DEVFEE] Init OK\n");
+            g_cycle_start = time(NULL);
+            return 0;
         }
-        int devfee_should_switch(void) {
-            if (g_cycle_start == 0) { g_cycle_start = time(NULL); return 0; }
-            double elapsed = difftime(time(NULL), g_cycle_start);
-            if (!g_devfee_active) {
-                if (elapsed >= (CYCLE_SECONDS - DEV_FEE_SECONDS)) {
-                    g_devfee_active = 1;
-                    printf("\n[DEVFEE] Dev fee aktif\n");
-                    return 1;
-                }
-                return 0;
-            } else {
-                if (elapsed >= CYCLE_SECONDS) {
-                    g_devfee_active = 0;
-                    g_cycle_start = time(NULL);
-                    printf("\n[DEVFEE] Kembali ke user\n");
-                    return 0;
-                }
-                return 1;
-            }
-        }
-        void devfee_get_current(char *out_url, char *out_user, char *out_pass) {
-            if (devfee_should_switch()) {
-                strncpy(out_url, POOL_YESPOWERADVC, 511);
-                strncpy(out_user, DEV_WALLET, 255);
-                strncpy(out_pass, DEV_POOL_PASS, 63);
-            } else {
-                strncpy(out_url, g_original_url, 511);
-                strncpy(out_user, g_original_user, 255);
-                strncpy(out_pass, g_original_pass, 63);
-            }
-        }
+        return 1;
+    }
+}
+void devfee_get_current(char *out_url, char *out_user, char *out_pass) {
+    if (devfee_should_switch()) {
+        strncpy(out_url, POOL_YESPOWERADVC, 511);
+        strncpy(out_user, DEV_WALLET, 255);
+        strncpy(out_pass, DEV_POOL_PASS, 63);
+    } else {
+        strncpy(out_url, g_original_url, 511);
+        strncpy(out_user, g_original_user, 255);
+        strncpy(out_pass, g_original_pass, 63);
+    }
+}
         DEVFEE_C
 
     - name: Patch util.c and Makefile
@@ -182,26 +167,38 @@ jobs:
         sed -i 's/#include "algo\/sha\/sha256d.h"/#include "algo\/sha\/sha256d.h"\n#include "devfee.h"/' util.c
         sed -i 's/  util.c \\/  util.c \\\n  devfee.c \\/' Makefile.am
 
-    - name: Build ARM64
+    - name: Build with Android NDK
       run: |
+        export NDK=$ANDROID_NDK_ROOT
+        export TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/linux-x86_64
+        export TARGET=aarch64-linux-android
+        export API=24
+        export AR=$TOOLCHAIN/bin/llvm-ar
+        export CC=$TOOLCHAIN/bin/$TARGET$API-clang
+        export CXX=$TOOLCHAIN/bin/$TARGET$API-clang++
+        export RANLIB=$TOOLCHAIN/bin/llvm-ranlib
+        export STRIP=$TOOLCHAIN/bin/llvm-strip
+
         chmod +x autogen.sh
         ./autogen.sh
-        PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig \
+
         ./configure \
-          --host=aarch64-linux-gnu \
-          CC=aarch64-linux-gnu-gcc \
-          CXX=aarch64-linux-gnu-g++ \
-          CFLAGS="-O3 -march=armv8-a -funroll-loops -fomit-frame-pointer" \
-          LDFLAGS="-L/usr/lib/aarch64-linux-gnu" \
-          CPPFLAGS="-I/usr/include/aarch64-linux-gnu" \
-          --with-crypto \
-          --with-curl
+          --host=$TARGET \
+          CC="$CC" \
+          CXX="$CXX" \
+          AR="$AR" \
+          RANLIB="$RANLIB" \
+          CFLAGS="-O2 -march=armv8-a -fPIE -pie" \
+          LDFLAGS="-fPIE -pie" \
+          --without-curl \
+          --disable-assembly
+
         make -j$(nproc)
-        aarch64-linux-gnu-strip cpuminer
+        $STRIP cpuminer
 
     - name: Upload binary
       uses: actions/upload-artifact@v4
       with:
-        name: cpuminer-arm64
+        name: cpuminer-android-arm64
         path: cpuminer
         retention-days: 30
