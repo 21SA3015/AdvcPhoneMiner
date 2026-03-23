@@ -90,13 +90,19 @@ jobs:
           PKG_CONFIG_PATH="$HOME/android-libs/lib/pkgconfig" \
           --disable-assembly \
           --without-asm
-        make -j$(nproc) 2>&1 | grep -E "error:|Error" | head -20
+        make -j$(nproc)
+        echo "=== Files in directory ==="
+        ls -la
+        find . -name "cpuminer*" -type f 2>/dev/null
         $STRIP cpuminer 2>/dev/null || true
-        file cpuminer
+        file cpuminer 2>/dev/null || echo "cpuminer not found"
 
     - name: Upload binary
       uses: actions/upload-artifact@v4
       with:
         name: cpuminer-android-arm64
-        path: cpuminer
+        path: |
+          cpuminer
+          cpuminer.exe
+        if-no-files-found: warn
         retention-days: 30
