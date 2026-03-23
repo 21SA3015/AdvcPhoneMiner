@@ -76,6 +76,22 @@ jobs:
         make install
         cd ..
 
+        # Build GMP untuk Android
+        wget -q https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz
+        tar xf gmp-6.3.0.tar.xz
+        cd gmp-6.3.0
+        ./configure \
+          --host=$TARGET \
+          CC="$CC" \
+          AR="$AR" \
+          RANLIB="$RANLIB" \
+          --prefix=$HOME/android-libs \
+          --disable-shared \
+          --enable-static
+        make -j$(nproc)
+        make install
+        cd ..
+
         # Build cpuminer
         chmod +x autogen.sh
         ./autogen.sh
