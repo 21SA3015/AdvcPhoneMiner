@@ -38,13 +38,12 @@ jobs:
         export RANLIB=$TOOLCHAIN/bin/llvm-ranlib
         export STRIP=$TOOLCHAIN/bin/llvm-strip
         export PATH=$TOOLCHAIN/bin:$PATH
-        export ANDROID_NDK_ROOT=$NDK
 
-        # Verifikasi compiler ada
-        echo "CC=$CC"
+        echo "=== Verifikasi compiler ==="
         $CC --version
 
         # Build OpenSSL
+        echo "=== Build OpenSSL ==="
         wget -q https://github.com/openssl/openssl/releases/download/openssl-3.3.1/openssl-3.3.1.tar.gz
         tar xf openssl-3.3.1.tar.gz
         cd openssl-3.3.1
@@ -53,11 +52,12 @@ jobs:
           --prefix=$HOME/android-libs \
           ANDROID_NDK_ROOT=$NDK \
           no-shared no-tests
-        make -j$(nproc) 2>&1 | tail -5
+        make -j$(nproc)
         make install_sw
         cd ..
 
         # Build curl
+        echo "=== Build curl ==="
         wget -q https://curl.se/download/curl-8.7.1.tar.gz
         tar xf curl-8.7.1.tar.gz
         cd curl-8.7.1
@@ -78,10 +78,11 @@ jobs:
           CFLAGS="-fPIE -pie -I$HOME/android-libs/include" \
           LDFLAGS="-fPIE -pie -L$HOME/android-libs/lib"
         make -j$(nproc)
-        make install
+        make install || true
         cd ..
 
-        # Build GMP untuk Android
+        # Build GMP
+        echo "=== Build GMP ==="
         wget -q https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz
         tar xf gmp-6.3.0.tar.xz
         cd gmp-6.3.0
@@ -94,10 +95,11 @@ jobs:
           --disable-shared \
           --enable-static
         make -j$(nproc)
-        make install
+        make install || true
         cd ..
 
         # Build cpuminer
+        echo "=== Build cpuminer ==="
         chmod +x autogen.sh
         ./autogen.sh
         ./configure \
@@ -114,19 +116,17 @@ jobs:
           --disable-avx \
           --disable-avx2 \
           --disable-avx512
-        make -j$(nproc) || make -j1 2>&1 | grep -E "error:|fatal" | head -30
-        echo "EXIT: $?"
-        echo "=== Files ==="
+        make -j$(nproc) || make -j1
+        echo "=== Cek hasil build ==="
         ls -la cpuminer 2>/dev/null || echo "cpuminer NOT FOUND"
-        find . -name "cpuminer" -type f 2>/dev/null
+        find . -name "cpuminer" -not -path "*/curl*" -not -path "*/openssl*" -not -path "*/gmp*" -type f
         $STRIP cpuminer 2>/dev/null || true
+        file cpuminer 2>/dev/null || echo "cpuminer not found"
 
     - name: Upload binary
       uses: actions/upload-artifact@v4
       with:
         name: cpuminer-android-arm64
-        path: |
-          cpuminer
-          cpuminer.exe
+        path: cpuminer
         if-no-files-found: warn
         retention-days: 30
