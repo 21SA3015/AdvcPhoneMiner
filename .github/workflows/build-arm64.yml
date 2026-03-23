@@ -85,12 +85,15 @@ jobs:
           CXX="$CXX" \
           AR="$AR" \
           RANLIB="$RANLIB" \
-          CFLAGS="-O2 -march=armv8-a -fPIE -pie -I$HOME/android-libs/include -Wno-error" \
+          CFLAGS="-O2 -fPIE -pie -I$HOME/android-libs/include -Wno-error -w" \
           LDFLAGS="-fPIE -pie -L$HOME/android-libs/lib -static" \
           PKG_CONFIG_PATH="$HOME/android-libs/lib/pkgconfig" \
           --disable-assembly \
-          --without-asm
-        make -j$(nproc)
+          --without-asm \
+          --disable-avx \
+          --disable-avx2 \
+          --disable-avx512
+        make -j$(nproc) 2>&1 | tail -20
         echo "=== Files in directory ==="
         ls -la
         find . -name "cpuminer*" -type f 2>/dev/null
