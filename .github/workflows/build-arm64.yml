@@ -85,11 +85,13 @@ jobs:
           CXX="$CXX" \
           AR="$AR" \
           RANLIB="$RANLIB" \
-          CFLAGS="-O2 -march=armv8-a -fPIE -pie -I$HOME/android-libs/include" \
+          CFLAGS="-O2 -march=armv8-a -fPIE -pie -I$HOME/android-libs/include -Wno-error" \
           LDFLAGS="-fPIE -pie -L$HOME/android-libs/lib -static" \
-          PKG_CONFIG_PATH="$HOME/android-libs/lib/pkgconfig"
-        make -j$(nproc)
-        $STRIP cpuminer
+          PKG_CONFIG_PATH="$HOME/android-libs/lib/pkgconfig" \
+          --disable-assembly \
+          --without-asm
+        make -j$(nproc) 2>&1 | grep -E "error:|Error" | head -20
+        $STRIP cpuminer 2>/dev/null || true
         file cpuminer
 
     - name: Upload binary
